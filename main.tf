@@ -1,26 +1,26 @@
-variable "cluster_ca_certificate" {
-  type      = string
-  sensitive = true
+terraform {
+  backend "kubernetes" {
+    secret_suffix     = "infra-state"
+    namespace         = "terraform-states"
+  }
 }
 
-variable "cluster_host" {
-  type      = string
-  sensitive = false
-}
-
-variable "cluster_token" {
+variable "github_token" {
   type      = string
   sensitive = true
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = var.cluster_host
-    cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
-    token                  = var.cluster_token
+    in_cluster_config = true
   }
 }
 
 module "dbs" {
   source = "./db"
+}
+
+module "dev-tools" {
+  source = "./dev-tools"
+  github_token = var.github_token
 }

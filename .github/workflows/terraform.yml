@@ -6,20 +6,32 @@ on:
       - master
 jobs:
   terraform:
-    runs-on: ubuntu-latest
+    runs-on: homelab-runners
     environment: homelab
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Terraform Init
+        run: terraform init
+      - name: Debug State Source
+        run: |
+          echo "I am currently in workspace: $(terraform workspace show)"
+          echo "I see the following resources in state:"
+          terraform state list
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve --lock-timeout=300s
         env:
           # This maps the secret to the 'cluster_ca_certificate' variable
           TF_VAR_cluster_ca_certificate: ${{ secrets.CLUSTER_CA_CERTIFICATE }}
           # Include other necessary secrets (e.g., K8S token or AWS/Azure credentials)
           TF_VAR_cluster_token: ${{ secrets.CLUSTER_TOKEN }}
           TF_VAR_cluster_host: ${{ vars.CLUSTER_HOST }}
+          TF_VAR_github_token: ${{ secrets.TOKEN_GITHUB }}
