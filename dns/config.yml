@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-extern-config
+  namespace: external-dns
+data:
+  Corefile: |
+    home.arpa {
+        file /etc/coredns/home.db
+        log
+        errors
+    }
+
+    . {
+        health
+        ready
+        forward . 1.1.1.1 1.0.0.1
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+  home.db: |
+    home.arpa.            IN SOA ns1.home.arpa. admin.home.arpa. (2026042401 7200 3600 1209600 3600)
+    home.arpa.            IN NS  ns1.home.arpa.
+    ns1.home.arpa.        IN A   192.168.1.50
+    
+    # Your Homelab Records
+    proxmox.home.arpa.    IN A   192.168.1.10
+    truenas.home.arpa.    IN A   192.168.1.11
+    plex.home.arpa.       IN A   192.168.1.50  # Pointing to the MetalLB IP

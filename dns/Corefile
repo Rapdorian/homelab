@@ -1,0 +1,12 @@
+jpruitt.dev {
+    file /etc/coredns/jpruitt.db
+    log
+    errors
+    reload
+}
+
+. {
+    health
+    forward . 1.1.1.1 1.0.0.1
+    cache 30
+}

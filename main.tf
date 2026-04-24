@@ -16,8 +16,8 @@ provider "helm" {
   }
 }
 
-module "dbs" {
-  source = "./db"
+module "dns" {
+  source = "./dns"
 }
 
 module "dev-tools" {

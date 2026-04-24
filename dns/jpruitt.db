@@ -1,0 +1,6 @@
+$ORIGIN jpruitt.dev.
+@   IN SOA ns1.jpruitt.dev. admin.jpruitt.dev. (2026042401 7200 3600 1209600 3600)
+@   IN NS  ns1.jpruitt.dev.
+ns1 IN A   10.0.1.51
+
+*.svc	IN A 10.0.1.50
