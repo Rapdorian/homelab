@@ -8,7 +8,8 @@ resource "kubernetes_manifest" "metallb_ip_pool" {
     }
     "spec" = {
       "addresses" = [
-        "10.0.1.50-10.0.1.255"
+        "10.0.1.50-10.0.1.255",
+        "10.0.0.55/32"
       ]
     }
   }

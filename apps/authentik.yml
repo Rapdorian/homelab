@@ -1,0 +1,12 @@
+authentik:
+  secret_key: ${authentik_token}
+  postgresql:
+    host: "postgresql.database.svc.cluster.local"
+    name: "homelab"
+    user: "user"
+    password: ${password}
+    port: 5432
+
+postgresql:
+  enabled: false
+

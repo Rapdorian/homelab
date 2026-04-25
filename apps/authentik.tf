@@ -3,24 +3,17 @@ variable "authentik_token" {
   sensitive = true
 }
 
-resource "helm_release" "authentik" {
-  name       = "authentik"
-  repository = "https://charts.goauthentik.io"
-  chart      = "authentik"
-  namespace  = "authentik"
-  create_namespace = true
-
-  # Essential values for a basic installation
-  set = [
-    {
-      name  = "authentik.secret_key"
-      value = var.authentik_token
-    }, {
-      name  = "postgresql.enabled"
-      value = "false"
-    }, {
-      name  = "redis.enabled"
-      value = "false"
-    }
-  ]
-}
+# resource "helm_release" "authentik" {
+#   name       = "authentik"
+#   repository = "https://charts.goauthentik.io"
+#   chart      = "authentik"
+#   namespace  = "authentik"
+#   create_namespace = true
+# 
+#   values = [
+#     templatefile("${path.module}/authentik.yml", {
+#       password = "test"
+#       authentik_token = var.authentik_token
+#     })
+#   ]
+# }

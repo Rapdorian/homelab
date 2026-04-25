@@ -1,0 +1,7 @@
+ingress:
+  enabled: true
+  hosts:
+    - host: pgweb.svc.jpruitt.dev
+      paths:
+        - path: /
+          pathType: Prefix
