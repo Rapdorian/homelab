@@ -1,12 +1,22 @@
 authentik:
+  config:
+    site_url: http://auth.svc.jpruitt.dev
   secret_key: ${authentik_token}
   postgresql:
     host: "postgresql.database.svc.cluster.local"
-    name: "homelab"
-    user: "user"
+    name: "authentik"
+    user: "authentik_user"
     password: ${password}
     port: 5432
 
 postgresql:
   enabled: false
 
+server:
+  ingress:
+    ingressClassName: traefik
+    hosts:
+      - host: auth.svc.jpruitt.dev
+        paths:
+          - path: /
+            pathType: Prefix

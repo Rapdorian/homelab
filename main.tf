@@ -14,12 +14,26 @@ terraform {
   }
 }
 
+variable "pg_host" {
+  type      = string
+  sensitive = true
+  default   = "postgresql.database.svc.cluster.local"
+}
+
+data "kubernetes_secret" "pg-secret" {
+  metadata {
+    name      = "postgresql"
+    namespace = "database"
+  }
+  depends_on = [module.dbs]
+}
+
 provider "postgresql" {
-  host            = "postgresql.database.svc.cluster.local"
+  host            = var.pg_host
   port            = 5432
-  database        = "postgres"
+  database        = ""
   username        = "postgres"
-  password        = random_password.postgres_password.result
+  password        = data.kubernetes_secret.pg-secret.data["postgres-password"]
   sslmode         = "disable"
   connect_timeout = 15
 }
@@ -47,17 +61,10 @@ module "dev-tools" {
 module "dbs" {
   source = "./dbs"
 
-  postgres_password = random_password.postgres_password.result
 }
 
 
 module "apps" {
   source = "./apps"
   authentik_token = random_password.authentik_token.result
-}
-
-resource "postgresql_role" "app_user" {
-  name = "app_user"
-  login = true
-  password = "password"
 }
