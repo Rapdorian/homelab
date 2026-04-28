@@ -3,4 +3,6 @@ resource "helm_release" "prometheus" {
 	chart = "oci://ghcr.io/prometheus-community/charts/prometheus"
 	namespace = "metric"
 	create_namespace = true
+
+  values = [ file("${path.module}/prometheus.yml") ]
 }

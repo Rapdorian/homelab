@@ -1,2 +1,11 @@
-auth:
-  existingSecret: "pg-secret"
+passwordUpdateJob:
+  enabled: true
+metrics:
+  enabled: true
+    service:
+    # Port for the metrics endpoint (default is 9187)
+    port: 9187
+    # Annotations for Prometheus auto-discovery (if NOT using Operator)
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9187"

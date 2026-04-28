@@ -1,0 +1,7 @@
+server:
+  ingress:
+    enabled: true
+    hosts:
+      - prometheus.svc.jpruitt.dev
+    path: /
+  baseURL: "https://prometheus.svc.jpruitt.dev"
