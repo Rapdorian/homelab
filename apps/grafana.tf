@@ -17,13 +17,15 @@ resource "postgresql_database" "grafana-db" {
   allow_connections = true
 }
 
-resource "kubernetes_secret" "grafana-postgres-secret" {
+resource "kubernetes_secret" "grafana-secret" {
   metadata {
     name      = "grafana-postgres-secret"
     namespace = "metric"
   }
   data = {
-    password = random_password.pg-gf-password.result
+    postgres-password = random_password.pg-gf-password.result
+    auth-client-secret = random_password.gf-client-secret.result
+    auth-client-id = random_password.gf-client-id.result
   }
 }
 

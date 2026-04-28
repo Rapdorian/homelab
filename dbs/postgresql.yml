@@ -1,11 +1,11 @@
 passwordUpdateJob:
   enabled: true
+auth:
+  postgresPassword: ${password}
 metrics:
   enabled: true
-    service:
-    # Port for the metrics endpoint (default is 9187)
+  service:
     port: 9187
-    # Annotations for Prometheus auto-discovery (if NOT using Operator)
     annotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "9187"
