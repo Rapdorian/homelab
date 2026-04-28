@@ -1,0 +1,7 @@
+githubConfigUrl: "https://github.com/Rapdorian/homelab"
+githubConfigSecret:
+  github_token: ${token}
+podAnnotations:
+  "prometheus.io/scrape": "true"
+  "prometheus.io/path": "/metrics"
+  "prometheus.io/port": "8080"
