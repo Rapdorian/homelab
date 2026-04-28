@@ -10,7 +10,5 @@ resource "helm_release" "grafana" {
 	chart = "oci://ghcr.io/grafana-community/helm-charts/grafana"
 	namespace = "metric"
 	create_namespace = true
-	values = [ templatefile("${path.module}/grafana.yml",{
-    secret = data.kubernetes_secret.grafana-auth-client-secret.data["secret"]
-  }) ]
+	values = [ file("${path.module}/grafana.yml") ]
 }
