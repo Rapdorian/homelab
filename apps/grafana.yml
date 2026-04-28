@@ -14,6 +14,18 @@ grafana.ini:
     api_url: "http://authentik-server.authentik.svc.cluster.local/application/o/userinfo/"
     signout_redirect_url: "https://auth.svc.jpruitt.dev/application/o/grafana/end-session/"
     role_attribute_path: "contains(groups[*], 'Grafana Admins') && 'Admin' || contains(groups[*], 'Grafana Editors') && 'Editor' || 'Viewer'"
+  database:
+    type: postgres
+    host: "postgresql.database.svc.cluster.local"
+    name: "grafana"
+    user: "grafana_user"
+    ssl_mode: disable
+persistence:
+  type: pvc
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
 ingress:
   enabled: true
   hosts:
@@ -24,3 +36,7 @@ envValueFrom:
     secretKeyRef:
       name: grafana-auth-client-secret
       key: secret
+  GF_DATABASE_PASSWORD:
+    secretKeyRef:
+      name: grafana-postgres-secret
+      key: password

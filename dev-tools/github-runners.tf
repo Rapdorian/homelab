@@ -22,6 +22,15 @@ resource "helm_release" "homelab" {
       githubConfigSecret = {
         github_token = var.github_token
       }
+      metrics = {
+        enabled = true
+        proxy = {
+          enabled = false
+        }
+        serviceMonitor = {
+          enabled = true
+        }
+      }
     })
   ]
 
