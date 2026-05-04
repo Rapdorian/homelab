@@ -1,8 +1,8 @@
 name: Base cluster
 on:
   push:
-    paths:
-      - 'core/base/**'
+    # paths:
+    #  - 'core/base/**'
 
 jobs:
   deploy:
