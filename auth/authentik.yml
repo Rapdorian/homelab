@@ -1,6 +1,7 @@
 authentik:
-  config:
-  secret_key: ${authentik_token}
+  bootstrap_password: "${authentik_token}"
+  bootstrap_token: "${authentik_token}"
+  bootstrap_email: "admin@jpruitt.dev"
   postgresql:
     host: "postgresql.database.svc.cluster.local"
     name: "authentik"
