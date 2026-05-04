@@ -9,7 +9,7 @@ resource "authentik_group" "gf-admin" {
 resource "authentik_provider_oauth2" "grafana" {
   name               = "Grafana"
   client_id          = random_password.gf-client-id.result
-  client_secret      = random_password.gf-client-secret
+  client_secret      = random_password.gf-client-secret.result
   authorization_flow = data.authentik_flow.default_auth.id
   invalidation_flow  = data.authentik_flow.default_invalidation.id
   
