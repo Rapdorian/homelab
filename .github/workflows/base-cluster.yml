@@ -1,0 +1,18 @@
+name: Base cluster
+on:
+  push:
+    paths:
+      - 'core/base/**'
+
+jobs:
+  deploy:
+    runs-on: homelab-runners
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hashicorp/setup-terraform@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: cd core/base && terraform init
+      - run: cd core/base && terraform apply -refresh-only
+      - run: cd core/base && terraform apply -auto-approve --lock-timeout=300s

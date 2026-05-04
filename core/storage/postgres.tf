@@ -17,7 +17,7 @@ resource "helm_release" "postgresql" {
 # Create the Secret in the 'authentik' or 'default' namespace
 resource "kubernetes_secret" "postgres-tokens" {
   metadata {
-    name      = "postgres-auth"
+    name      = "postgres-cred"
     namespace = "terraform-states" 
   }
 

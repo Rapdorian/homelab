@@ -10,7 +10,7 @@ terraform {
 # Look up the secret created by the identity layer
 data "kubernetes_secret" "pg-cred" {
   metadata {
-    name      = "postgres-auth"
+    name      = "postgres-cred"
     namespace = "terraform-states"
   }
 }

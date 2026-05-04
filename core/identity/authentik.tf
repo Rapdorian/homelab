@@ -3,8 +3,18 @@ resource "random_password" "authentik_token" {
   special = true
 }
 
-output "authentik_token" {
-  value = random_password.authentik_token.result
+resource "kubernetes_secret" "authentik-cred" {
+  metadata {
+    name      = "authentik-cred"
+    namespace = "terraform-states" 
+  }
+
+  data = {
+    PASSWORD = random_password.authentik_token.result
+    USER = "admin@jpruitt.dev"
+  }
+
+  type = "Opaque"
 }
 
 resource "random_password" "pg-password" {
