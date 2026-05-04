@@ -21,9 +21,15 @@ provider "helm" {
   }
 }
 
+resource "time_sleep" "wait_for_authentik" {
+  depends_on = [module.auth]
+  create_duration = "60s"
+}
+
 provider "authentik" {
   url   = "http://authentik-server.authentik.svc.cluster.local"
   token = module.auth.authentik_token
+  alias = "initialized"
 }
 
 provider "postgresql" {
