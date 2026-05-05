@@ -1,9 +1,12 @@
-include .env
-export
+.PHONY: base
+base:
+	cd core/base/install && terraform init
+	cd core/base/config && terraform init
 
-apply:
-	terraform init --upgrade
-	terraform apply --auto-approve
+	cd core/base/install && terraform apply --auto-approve --lock-timeout=300s
+	cd core/base/config && terraform apply --auto-approve --lock-timeout=300s
 
-destroy:
-	terraform destroy --auto-approve
+.PHONY: ci-runner
+ci-runner:
+	cd ci-runner && terraform init
+	cd ci-runner && terraform apply --auto-approve --lock-timeout=300s

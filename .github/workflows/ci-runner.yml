@@ -1,9 +1,9 @@
-name: Base cluster
+name: CI Runners
 on:
   push:
     paths:
-      - 'core/base/**'
-      - '.github/workflows/base-cluster.yml'
+      - 'ci-runner/**'
+      - '.github/workflows/ci-runner.yml'
 
 jobs:
   deploy:
@@ -14,4 +14,4 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - run: make base
+      - run: make ci-runner

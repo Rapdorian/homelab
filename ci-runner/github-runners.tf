@@ -13,7 +13,7 @@ resource "helm_release" "arc" {
 }
 
 resource "helm_release" "homelab" {
-  name             = "homelab-runners"
+  name             = "homelab"
   chart            = "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set"
   namespace        = "arc-systems"
   create_namespace = true

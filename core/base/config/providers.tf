@@ -1,6 +1,6 @@
 terraform {
   backend "kubernetes" {
-    secret_suffix     = "core-base"
+    secret_suffix     = "core-base-config"
     namespace         = "terraform-states"
   }
 }
