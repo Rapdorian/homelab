@@ -48,7 +48,7 @@ jobs:
 
   core-base-config:
     needs: [changes, core-base-install]
-    if: ${{ !cancelled() && needs.core-base-install.result == 'success' && needs.changes.outputs.core == 'true' }}
+    if: ${{ !cancelled() && (needs.core-base-install.result == 'success' || needs.core-base-install.result == 'skipped') && needs.changes.outputs.core == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -66,7 +66,7 @@ jobs:
 
   core-storage:
     needs: [changes, core-base-config]
-    if: ${{ !cancelled() && needs.core-base-config.result == 'success' && needs.changes.outputs.core == 'true' }}
+    if: ${{ !cancelled() && (needs.core-base-config.result == 'success' || needs.core-base-config.result == 'skipped') && needs.changes.outputs.core == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -84,7 +84,7 @@ jobs:
 
   core-identity:
     needs: [changes, core-storage]
-    if: ${{ !cancelled() && needs.core-storage.result == 'success' && needs.changes.outputs.core == 'true' }}
+    if: ${{ !cancelled() && (needs.core-storage.result == 'success' || needs.core-storage.result == 'skipped') && needs.changes.outputs.core == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -102,7 +102,7 @@ jobs:
 
   apps:
     needs: [changes, core-identity]
-    if: ${{ !cancelled() && needs.core-identity.result == 'success' && needs.changes.outputs.apps == 'true' }}
+    if: ${{ !cancelled() && (needs.core-identity.result == 'success' || needs.core-identity.result == 'skipped') && needs.changes.outputs.apps == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -120,7 +120,7 @@ jobs:
 
   ci-runner:
     needs: [changes, core-base-config]
-    if: ${{ !cancelled() && needs.core-base-config.result == 'success' && needs.changes.outputs.ci-runner == 'true' }}
+    if: ${{ !cancelled() && (needs.core-base-config.result == 'success' || needs.core-base-config.result == 'skipped') && needs.changes.outputs.ci-runner == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
