@@ -29,6 +29,12 @@ resource "kubernetes_role" "terraform-state-reader" {
     resources  = ["secrets"]
     verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
   }
+
+  rule {
+    api_groups = ["coordination.k8s.io"]
+    resources  = ["leases"]
+    verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
+  }
 }
 
 resource "kubernetes_role_binding" "terraform-state-reader-binding" {
