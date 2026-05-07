@@ -48,6 +48,17 @@ envValueFrom:
 env:
   GF_SERVER_ROOT_URL: https://grafana.svc.jpruitt.dev
 
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.metric.svc.cluster.local
+        isDefault: true
+        editable: true
+
 securityContext:
   runAsUser: 472
   runAsGroup: 472
