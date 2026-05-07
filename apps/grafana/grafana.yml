@@ -47,3 +47,8 @@ envValueFrom:
 
 env:
   GF_SERVER_ROOT_URL: https://grafana.svc.jpruitt.dev
+
+securityContext:
+  runAsUser: 472
+  runAsGroup: 472
+  fsGroup: 472
