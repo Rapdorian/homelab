@@ -8,11 +8,6 @@ variable "username" {
   default = "ps2"
 }
 
-variable "description" {
-  type    = string
-  default = "PS2 SMB v1 network share with Authentik LDAP auth"
-}
-
 terraform {
   required_providers {
     kubernetes = {
