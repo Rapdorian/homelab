@@ -209,7 +209,7 @@ resource "kubernetes_service" "ldap_outpost" {
 resource "authentik_user" "ldapservice" {
   username = "ldapservice"
   name     = "LDAP Service Account"
-  type     = "internal_service_account"
+  type     = "service_account"
 
   depends_on = [helm_release.authentik]
 }
@@ -232,7 +232,7 @@ resource "null_resource" "set_ldapservice_password" {
   depends_on = [authentik_user.ldapservice]
 }
 
-resource "authentik_group" "samba_users" {
+data "authentik_group" "samba_users" {
   name = "Samba Users"
 
   depends_on = [helm_release.authentik]
