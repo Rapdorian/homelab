@@ -1,0 +1,111 @@
+name: Deploy
+on:
+  push:
+    paths:
+      - 'core/**'
+      - 'apps/**'
+      - 'ci-runner/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  core-base-install:
+    runs-on: homelab
+    if: ${{ contains(github.event.head_commit.modified || [], 'core/') || contains(github.event.head_commit.added || [], 'core/') || github.event.head_commit.message == '' }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: hashicorp/setup-terraform@v4
+      - run: cd core/base/install && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - if: cancelled() || failure()
+        run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-base-install
+
+  core-base-config:
+    needs: core-base-install
+    runs-on: homelab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: hashicorp/setup-terraform@v4
+      - run: cd core/base/config && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - if: cancelled() || failure()
+        run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-base-config
+
+  core-storage:
+    needs: core-base-config
+    runs-on: homelab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: hashicorp/setup-terraform@v4
+      - run: cd core/storage && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - if: cancelled() || failure()
+        run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-storage
+
+  core-identity:
+    needs: core-storage
+    runs-on: homelab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: hashicorp/setup-terraform@v4
+      - run: cd core/identity && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - if: cancelled() || failure()
+        run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-identity
+
+  apps:
+    needs: core-identity
+    runs-on: homelab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: hashicorp/setup-terraform@v4
+      - run: cd apps && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - if: cancelled() || failure()
+        run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-apps
+
+  ci-runner:
+    needs: core-base-config
+    runs-on: homelab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hashicorp/setup-terraform@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: cd ci-runner && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock=false
+      - if: cancelled() || failure()
+        run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-ci-runner
