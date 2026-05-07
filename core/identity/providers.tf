@@ -1,13 +1,30 @@
 terraform {
+  backend "kubernetes" {
+    secret_suffix     = "core-identity"
+    namespace         = "terraform-states"
+  }
+
   required_providers {
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
     postgresql = {
-      source = "cyrilgdn/postgresql"
+      source  = "cyrilgdn/postgresql"
       version = "1.26.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
     }
   }
 }
 
-# Look up the secret created by the identity layer
+# Look up the secret created by the storage layer
 data "kubernetes_secret" "pg-cred" {
   metadata {
     name      = "postgres-cred"

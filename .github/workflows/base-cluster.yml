@@ -1,8 +1,8 @@
-name: Base cluster
+name: Core cluster
 on:
   push:
     paths:
-      - 'core/base/**'
+      - 'core/**'
       - '.github/workflows/base-cluster.yml'
 
 jobs:
@@ -16,4 +16,4 @@ jobs:
           node-version: 24
       - run: sudo apt update
       - run: sudo apt install make
-      - run: make base
+      - run: make core
