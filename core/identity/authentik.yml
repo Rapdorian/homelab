@@ -14,11 +14,6 @@ server:
     enabled: true
     hosts:
       - auth.svc.jpruitt.dev
-ldap:
-  enabled: true
-  bind_cn: "cn=ldapservice,ou=users,dc=goauthentik,dc=io"
-  bind_password: "${ldap_password}"
-  tls_enabled: false
 postgresql:
   enabled: false
 

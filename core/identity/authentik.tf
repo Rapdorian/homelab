@@ -71,7 +71,175 @@ resource "helm_release" "authentik" {
       password = random_password.pg-password.result
       authentik_token = random_password.authentik_token.result
       secret_key = random_password.authentik_secret_key.result
-      ldap_password = random_password.ldap_password.result
     })
   ]
+}
+
+data "authentik_flow" "default-authentication-flow" {
+  slug = "default-authentication-flow"
+
+  depends_on = [helm_release.authentik]
+}
+
+data "authentik_flow" "default-invalidation-flow" {
+  slug = "default-invalidation-flow"
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "authentik_provider_ldap" "samba" {
+  name         = "samba-ldap"
+  base_dn      = "dc=ldap,dc=goauthentik,dc=io"
+  bind_flow    = data.authentik_flow.default-authentication-flow.id
+  unbind_flow  = data.authentik_flow.default-invalidation-flow.id
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "authentik_service_connection_kubernetes" "local" {
+  name  = "local-cluster"
+  local = true
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "authentik_outpost" "ldap" {
+  name             = "samba-ldap-outpost"
+  type             = "ldap"
+  protocol_providers = [
+    authentik_provider_ldap.samba.id
+  ]
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "kubernetes_deployment" "ldap_outpost" {
+  metadata {
+    name      = "authentik-ldap-outpost"
+    namespace = "authentik"
+    labels = {
+      app = "authentik-ldap"
+    }
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = {
+        app = "authentik-ldap"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "authentik-ldap"
+        }
+      }
+
+      spec {
+        container {
+          name  = "ldap-outpost"
+          image = "ghcr.io/goauthentik/ldap:2026.2.2"
+
+          port {
+            container_port = 3389
+            protocol       = "TCP"
+          }
+
+          port {
+            container_port = 6636
+            protocol       = "TCP"
+          }
+
+          env {
+            name  = "AUTHENTIK_HOST"
+            value = "http://authentik-server.authentik.svc.cluster.local"
+          }
+
+          env {
+            name  = "AUTHENTIK_TOKEN"
+            value = random_password.authentik_token.result
+          }
+
+          env {
+            name  = "AUTHENTIK_INSECURE"
+            value = "true"
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "kubernetes_service" "ldap_outpost" {
+  metadata {
+    name      = "authentik-ldap"
+    namespace = "authentik"
+  }
+
+  spec {
+    selector = {
+      app = "authentik-ldap"
+    }
+
+    port {
+      name        = "ldap"
+      port        = 3389
+      target_port = 3389
+      protocol    = "TCP"
+    }
+
+    port {
+      name        = "ldaps"
+      port        = 6636
+      target_port = 6636
+      protocol    = "TCP"
+    }
+
+    type = "ClusterIP"
+  }
+
+  depends_on = [kubernetes_deployment.ldap_outpost]
+}
+
+resource "authentik_user" "ldapservice" {
+  username = "ldapservice"
+  name     = "LDAP Service Account"
+  type     = "internal_service_account"
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "null_resource" "set_ldapservice_password" {
+  triggers = {
+    user_id = authentik_user.ldapservice.id
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOF
+      curl -s -k -X POST \
+        -H "Authorization: Bearer ${random_password.authentik_token.result}" \
+        -H "Content-Type: application/json" \
+        -d '{"password": "${random_password.ldap_password.result}"}' \
+        "http://authentik-server.authentik.svc.cluster.local/api/v3/admin/users/${authentik_user.ldapservice.id}/set_password/"
+    EOF
+  }
+
+  depends_on = [authentik_user.ldapservice]
+}
+
+resource "authentik_group" "samba_users" {
+  name = "Samba Users"
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "authentik_group" "samba_admins" {
+  name = "Samba Admins"
+
+  depends_on = [helm_release.authentik]
 }

@@ -5,6 +5,10 @@ terraform {
   }
 
   required_providers {
+    authentik = {
+      source  = "goauthentik/authentik"
+      version = ">= 2024.0"
+    }
     helm = {
       source  = "hashicorp/helm"
       version = ">= 2.0, < 4.0"
@@ -12,6 +16,10 @@ terraform {
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
     }
     postgresql = {
       source  = "cyrilgdn/postgresql"
@@ -41,4 +49,10 @@ provider "postgresql" {
   password        = data.kubernetes_secret.pg-cred.data["PASSWORD"]
   sslmode         = "disable"
   connect_timeout = 15
+}
+
+provider "authentik" {
+  url      = "http://authentik-server.authentik.svc.cluster.local"
+  token    = random_password.authentik_token.result
+  insecure = true
 }

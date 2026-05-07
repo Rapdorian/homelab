@@ -21,10 +21,6 @@ terraform {
   }
 }
 
-resource "authentik_group" "samba_users" {
-  name = "Samba Users"
-}
-
 resource "authentik_application" "samba" {
   name    = "Samba Share"
   slug    = "samba-share"
@@ -75,10 +71,10 @@ resource "kubernetes_config_map" "samba_smb_conf" {
          map to guest = never
          security = user
          passdb backend = ldapsam:ldap://authentik-ldap.authentik.svc.cluster.local:3389
-         ldap suffix = dc=goauthentik,dc=io
+         ldap suffix = dc=ldap,dc=goauthentik,dc=io
          ldap user suffix = ou=users
          ldap group suffix = ou=groups
-         ldap admin dn = cn=ldapservice,ou=users,dc=goauthentik,dc=io
+         ldap admin dn = cn=ldapservice,ou=users,dc=ldap,dc=goauthentik,dc=io
          ldap ssl = off
          ldap passwd sync = yes
          log level = 1
@@ -93,7 +89,6 @@ resource "kubernetes_config_map" "samba_smb_conf" {
             read only = no
             create mask = 0777
             directory mask = 0777
-            valid users = @Samba Users
     EOF
   }
 }
