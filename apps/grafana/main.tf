@@ -80,6 +80,14 @@ resource "authentik_group" "gf_admin" {
   name = "Grafana Admins"
 }
 
+data "authentik_property_mapping_provider_scope" "grafana" {
+  managed_list = [
+    "goauthentik.io/providers/oauth2/scope-openid",
+    "goauthentik.io/providers/oauth2/scope-profile",
+    "goauthentik.io/providers/oauth2/scope-email",
+  ]
+}
+
 resource "authentik_provider_oauth2" "grafana" {
   name               = "Grafana"
   client_id          = random_password.client_id.result
@@ -94,11 +102,7 @@ resource "authentik_provider_oauth2" "grafana" {
     }
   ]
 
-  property_mappings = [
-    "openid",
-    "profile",
-    "email"
-  ]
+  property_mappings = data.authentik_property_mapping_provider_scope.grafana.ids
 }
 
 resource "helm_release" "grafana" {

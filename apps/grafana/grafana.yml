@@ -34,13 +34,13 @@ envValueFrom:
 
   GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
     secretKeyRef:
-      name: grafana-secret
+      name: grafana-postgres-secret
       key: auth-client-id
   GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
     secretKeyRef:
-      name: grafana-secret
+      name: grafana-postgres-secret
       key: auth-client-secret
   GF_DATABASE_PASSWORD:
     secretKeyRef:
-      name: grafana-secret
+      name: grafana-postgres-secret
       key: postgres-password

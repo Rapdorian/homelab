@@ -1,5 +1,7 @@
 module "grafana" {
   source = "./grafana"
+
+  depends_on = [module.prometheus]
 }
 
 module "pgweb" {
