@@ -15,3 +15,7 @@ jobs:
         with:
           node-version: 24
       - run: cd ci-runner && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock=false
+
+      - name: Cleanup state lock on failure or cancel
+        if: cancelled() || failure()
+        run: kubectl delete lease lock-tfstate-default-ci-runner -n terraform-states --ignore-not-found=true

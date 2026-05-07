@@ -15,3 +15,7 @@ jobs:
           node-version: 24
       - uses: hashicorp/setup-terraform@v4
       - run: cd apps && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+
+      - name: Cleanup state lock on failure or cancel
+        if: cancelled() || failure()
+        run: kubectl delete lease lock-tfstate-default-apps -n terraform-states --ignore-not-found=true

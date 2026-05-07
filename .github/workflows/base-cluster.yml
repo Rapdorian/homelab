@@ -18,3 +18,10 @@ jobs:
       - run: cd core/base/config && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
       - run: cd core/storage && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
       - run: cd core/identity && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+
+      - name: Cleanup state locks on failure or cancel
+        if: cancelled() || failure()
+        run: |
+          for suffix in core-base-install core-base-config core-storage core-identity; do
+            kubectl delete lease lock-tfstate-default-$suffix -n terraform-states --ignore-not-found=true
+          done
