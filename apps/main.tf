@@ -1,3 +1,7 @@
+module "samba" {
+  source = "./samba-module"
+}
+
 module "grafana" {
   source = "./grafana"
 
