@@ -232,12 +232,6 @@ resource "null_resource" "set_ldapservice_password" {
   depends_on = [authentik_user.ldapservice]
 }
 
-data "authentik_group" "samba_users" {
-  name = "Samba Users"
-
-  depends_on = [helm_release.authentik]
-}
-
 resource "authentik_group" "samba_admins" {
   name = "Samba Admins"
 
