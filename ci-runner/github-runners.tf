@@ -35,6 +35,48 @@ resource "kubernetes_role" "terraform-state-reader" {
     resources  = ["leases"]
     verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
   }
+
+  rule {
+    api_groups = ["rbac.authorization.k8s.io"]
+    resources  = ["roles", "rolebindings"]
+    verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
+  }
+}
+
+resource "kubernetes_role" "arc-secret-reader" {
+  metadata {
+    name      = "arc-secret-reader"
+    namespace = "arc-systems"
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["secrets"]
+    verbs      = ["get", "list", "watch"]
+  }
+
+  depends_on = [helm_release.homelab]
+}
+
+resource "kubernetes_role_binding" "arc-secret-reader-binding" {
+  metadata {
+    name      = "arc-secret-reader-binding"
+    namespace = "arc-systems"
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.arc-secret-reader.metadata[0].name
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = "homelab-gha-rs-no-permission"
+    namespace = "arc-systems"
+  }
+
+  depends_on = [helm_release.homelab]
 }
 
 resource "kubernetes_role_binding" "terraform-state-reader-binding" {
