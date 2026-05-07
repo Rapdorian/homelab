@@ -119,7 +119,7 @@ resource "kubernetes_deployment" "samba" {
 
       spec {
         container {
-          image = "dperson/samba:latest"
+          image = "dperson/samba"
           name  = "samba"
 
           env {
