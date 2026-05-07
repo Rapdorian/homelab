@@ -61,16 +61,12 @@ datasources:
 
 dashboards:
   default:
-    node-exporter-full:
-      gnetId: 1860
-      revision: 1
-      datasource: Prometheus
     k8s-cluster-overview:
-      gnetId: 7249
+      gnetId: 15661
       revision: 1
       datasource: Prometheus
-    k8s-scheduling:
-      gnetId: 13533
+    k8s-nodes:
+      gnetId: 15759
       revision: 1
       datasource: Prometheus
 
