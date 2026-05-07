@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
     authentik = {
       source  = "goauthentik/authentik"
       version = "2025.12.0"
@@ -31,11 +35,9 @@ resource "authentik_application" "samba" {
   group   = "apps"
 }
 
-data "kubernetes_secret" "authentik_ldap" {
-  metadata {
-    name      = "authentik-ldap-cred"
-    namespace = "terraform-states"
-  }
+resource "random_password" "samba" {
+  length  = 16
+  special = false
 }
 
 resource "kubernetes_namespace" "samba" {
@@ -74,13 +76,6 @@ resource "kubernetes_config_map" "samba_smb_conf" {
          server max protocol = SMB3
          map to guest = never
          security = user
-         passdb backend = ldapsam:ldap://authentik-server.authentik.svc.cluster.local
-         ldap suffix = dc=goauthentik,dc=io
-         ldap user suffix = ou=users
-         ldap group suffix = ou=groups
-         ldap admin dn = cn=ldapservice,ou=users,dc=goauthentik,dc=io
-         ldap ssl = off
-         ldap passwd sync = yes
          log level = 1
          log file = /var/log/samba/log.%m
          max log size = 1000
@@ -93,7 +88,7 @@ resource "kubernetes_config_map" "samba_smb_conf" {
             read only = no
             create mask = 0777
             directory mask = 0777
-            valid users = @Samba Users
+            valid users = ${var.username}
     EOF
   }
 }
@@ -124,7 +119,7 @@ resource "kubernetes_deployment" "samba" {
 
       spec {
         container {
-          image = "dperson/samba"
+          image = "linuxserver/samba"
           name  = "samba"
 
           env {
@@ -133,23 +128,33 @@ resource "kubernetes_deployment" "samba" {
           }
 
           env {
-            name  = "WORKGROUP"
-            value = "WORKGROUP"
+            name  = "USER_NAME"
+            value = var.username
           }
 
           env {
-            name  = "SHARE"
-            value = "PS2;/storage;yes;no;no"
+            name  = "USER_PASSWORD"
+            value = random_password.samba.result
           }
 
           env {
-            name  = "LDAP_BIND_DN"
-            value = "cn=ldapservice,ou=users,dc=goauthentik,dc=io"
+            name  = "USER_ID"
+            value = "1000"
           }
 
           env {
-            name  = "LDAP_BIND_PASSWORD"
-            value = data.kubernetes_secret.authentik_ldap.data["PASSWORD"]
+            name  = "GROUP_ID"
+            value = "1000"
+          }
+
+          env {
+            name  = "SHARE_NAME"
+            value = "PS2"
+          }
+
+          env {
+            name  = "VERSION1"
+            value = "yes"
           }
 
           port {
@@ -174,7 +179,7 @@ resource "kubernetes_deployment" "samba" {
 
           volume_mount {
             name       = "smb-conf"
-            mount_path = "/etc/samba/smb.conf"
+            mount_path = "/config/smb.conf"
             sub_path   = "smb.conf"
           }
 
