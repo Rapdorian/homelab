@@ -10,6 +10,9 @@ jobs:
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
       - uses: hashicorp/setup-terraform@v4
       - run: cd core/base/install && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
       - run: cd core/base/config && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
