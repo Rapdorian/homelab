@@ -1,0 +1,14 @@
+name: Apps
+on:
+  push:
+    paths:
+      - 'apps/**'
+      - '.github/workflows/apps.yml'
+
+jobs:
+  deploy:
+    runs-on: homelab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hashicorp/setup-terraform@v4
+      - run: cd apps && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
