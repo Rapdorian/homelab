@@ -47,6 +47,7 @@ resource "kubernetes_namespace" "samba" {
 }
 
 resource "kubernetes_persistent_volume_claim" "samba_share" {
+  wait_until_bound = false
   metadata {
     name      = "samba-share"
     namespace = kubernetes_namespace.samba.metadata[0].name
