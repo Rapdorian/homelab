@@ -1,6 +1,5 @@
 githubConfigUrl: "https://github.com/Rapdorian/homelab"
-githubConfigSecret:
-  github_token: ${token}
+githubConfigSecret: "github-token"
 
 listenerTemplate:
   spec:

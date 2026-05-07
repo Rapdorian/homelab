@@ -1,8 +1,3 @@
-variable "github_token" {
-  type      = string
-  sensitive = true
-}
-
 resource "helm_release" "arc" {
   name             = "arc-controller"
   chart            = "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller"
@@ -18,9 +13,7 @@ resource "helm_release" "homelab" {
   namespace        = "arc-systems"
   create_namespace = true
 
-  values = [ templatefile("${path.module}/github-runners.yml", {
-    token = var.github_token
-  }) ]
+  values = [ file("${path.module}/github-runners.yml") ]
 
   depends_on = [helm_release.arc]
 }

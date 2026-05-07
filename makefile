@@ -19,6 +19,16 @@ core-identity:
 .PHONY: core
 core: base core-storage core-identity
 
+.PHONY: ci-runner-secret
+ci-runner-secret:
+ifndef GITHUB_TOKEN
+	$(error GITHUB_TOKEN is not set. Usage: make ci-runner-secret GITHUB_TOKEN=<token>)
+endif
+	kubectl create secret generic github-token \
+		--namespace arc-systems \
+		--from-literal=github_token='$(GITHUB_TOKEN)' \
+		--dry-run=client -o yaml | kubectl apply -f -
+
 .PHONY: ci-runner
 ci-runner:
 	cd ci-runner && terraform init
