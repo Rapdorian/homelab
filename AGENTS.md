@@ -1,42 +1,51 @@
 # AGENTS.md - Homelab Terraform
 
 ## What this is
-Terraform IaC for a k3s homelab cluster. State is stored as Kubernetes secrets in namespace `terraform-states`. All providers must run **in-cluster** (`in_cluster_config = true`).
+Terraform IaC for a k3s homelab cluster. State is stored as Kubernetes secrets in namespace `terraform-states`. All providers run **in-cluster** (`in_cluster_config = true`).
 
 ## Developer commands
+- `make core` — applies all core layers in order: base → storage → identity
 - `make base` — initializes and applies `core/base/install` then `core/base/config` (MetalLB, Traefik)
+- `make core-storage` — initializes and applies `core/storage` (PostgreSQL)
+- `make core-identity` — initializes and applies `core/identity` (Authentik)
+- `make ci-runner-secret GITHUB_TOKEN=<token>` — creates k8s secret for GitHub Actions runner token
 - `make ci-runner` — initializes and applies `ci-runner/` (GitHub Actions runners)
-- `cd <module> && terraform init && terraform apply --auto-approve --lock-timeout=300s` — manual apply for any submodule
+- Local `terraform init` needs `KUBE_CONFIG_PATH=~/.kube/config` — providers use `in_cluster_config` but the backend reads kubeconfig
 
 ## Deployment order / dependencies
 ```
-core/base  (MetalLB, Traefik config)  ← run first
-dns
-dbs        (PostgreSQL)
-auth       (Authentik)               ← depends_on dbs
-apps       (Grafana, Prometheus)     ← depends_on dbs
-ci-runner  (GitHub ARC)              ← standalone
+core/base/install → core/base/config → core/storage → core/identity
+ci-runner (standalone, depends on core/base for MetalLB)
 ```
 
 ## Terraform state
 - Backend: `kubernetes` in namespace `terraform-states`
-- Each submodule has its own `secret_suffix` (e.g. `core-base-install`, `core-base-config`)
+- Locks stored as **Leases** (`coordination.k8s.io/v1`) in namespace `terraform-states`, named `lock-tfstate-default-<suffix>`
+- Each module has its own `secret_suffix` (e.g. `core-base-install`, `core-storage`, `core-identity`, `ci-runner`)
 - `.terraform/` and `.terraform.lock.hcl` are gitignored — always run `terraform init` before apply
 
-## Key gotchas
-- **`--lock-timeout=300s`** is required in makefile; omitting it causes lock contention errors
-- Root `main.tf` passes `module.auth.authentik_token` and `module.dbs.postgres_password` to providers — these are only available after their modules are applied
-- `providers.tf` at root defines `postgresql` provider pointing to `postgresql.database.svc.cluster.local` and `authentik` provider at `http://authentik-server.authentik.svc.cluster.local`
-- `core/identity` and `core/storage` directories exist but are **not referenced** by any root module (possibly unused or WIP)
-- `.github/workflows/storage.yml` and `identity.yml` are empty stubs
+## Stuck lock recovery
+If `terraform init` reports a stale lock:
+```
+KUBE_CONFIG_PATH=~/.kube/config kubectl delete lease lock-tfstate-default-<suffix> -n terraform-states
+rm -rf .terraform && KUBE_CONFIG_PATH=~/.kube/config terraform init
+```
 
 ## CI/CD
 - Workflows run on self-hosted runner: `runs-on: homelab`
-- `base-cluster.yml` triggers on `core/base/**` changes → runs `make base`
+- `base-cluster.yml` triggers on `core/**` changes → runs `make core`
 - `ci-runner.yml` triggers on `ci-runner/**` changes → runs `make ci-runner`
-- GitHub token is required as input variable for `ci-runner` and root `dev-tools` module
+- GitHub token is stored as k8s secret `github-token` in namespace `arc-systems`
 
 ## Network
 - MetalLB IP pool: `10.0.1.50-10.0.1.255` and `10.0.0.55/32`
 - Traefik load balancer IP: `10.0.0.55`
 - External domain: `svc.jpruitt.dev`
+
+## Module boundaries
+- `core/base/install` — MetalLB namespace + helm chart
+- `core/base/config` — MetalLB IP pool + L2Advertisement + Traefik HelmChartConfig
+- `core/storage` — PostgreSQL helm chart, writes `postgres-cred` secret to `terraform-states`
+- `core/identity` — Reads `postgres-cred`, creates authentik db/user, deploys authentik helm chart
+- `ci-runner` — GitHub ARC controller + runner scale set, RBAC for terraform state access
+- `core/identity` and `core/storage` are NOT referenced by root `main.tf` — they are standalone layered modules
