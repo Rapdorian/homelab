@@ -123,35 +123,20 @@ resource "kubernetes_deployment" "samba" {
       }
 
       spec {
-        init_container {
-          image   = "dperson/samba"
-          name    = "init-ldap"
-          command = ["/bin/sh", "-c"]
-          args = [
-            "cp /etc/samba/smb.conf.orig /etc/samba/smb.conf && smbpasswd -w ${data.kubernetes_secret.authentik_ldap.data["PASSWORD"]}"
-          ]
-          env {
-            name  = "TZ"
-            value = "UTC"
-          }
-          volume_mount {
-            name       = "samba-config"
-            mount_path = "/etc/samba"
-          }
-          volume_mount {
-            name       = "smb-conf-source"
-            mount_path = "/etc/samba/smb.conf.orig"
-            sub_path   = "smb.conf"
-          }
-        }
-
         container {
-          image = "dperson/samba"
-          name  = "samba"
+          image   = "dperson/samba"
+          name    = "samba"
+          command = ["/bin/sh", "-c"]
+          args    = ["smbpasswd -w $LDAP_BIND_PASS && exec /sbin/tini -- /usr/bin/samba.sh"]
 
           env {
             name  = "TZ"
             value = "UTC"
+          }
+
+          env {
+            name  = "LDAP_BIND_PASS"
+            value = data.kubernetes_secret.authentik_ldap.data["PASSWORD"]
           }
 
           port {
@@ -175,8 +160,9 @@ resource "kubernetes_deployment" "samba" {
           }
 
           volume_mount {
-            name       = "samba-config"
-            mount_path = "/etc/samba"
+            name       = "smb-conf"
+            mount_path = "/etc/samba/smb.conf"
+            sub_path   = "smb.conf"
           }
 
           volume_mount {
@@ -186,15 +172,10 @@ resource "kubernetes_deployment" "samba" {
         }
 
         volume {
-          name = "smb-conf-source"
+          name = "smb-conf"
           config_map {
             name = kubernetes_config_map.samba_smb_conf.metadata[0].name
           }
-        }
-
-        volume {
-          name = "samba-config"
-          empty_dir {}
         }
 
         volume {
