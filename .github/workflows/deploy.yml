@@ -1,16 +1,37 @@
 name: Deploy
 on:
   push:
+    branches: [master]
     paths:
       - 'core/**'
       - 'apps/**'
       - 'ci-runner/**'
-      - '.github/workflows/deploy.yml'
+      - '.github/workflows/**'
 
 jobs:
-  core-base-install:
+  changes:
     runs-on: homelab
-    if: ${{ contains(github.event.head_commit.modified || [], 'core/') || contains(github.event.head_commit.added || [], 'core/') || github.event.head_commit.message == '' }}
+    outputs:
+      core: ${{ steps.filter.outputs.core }}
+      apps: ${{ steps.filter.outputs.apps }}
+      ci-runner: ${{ steps.filter.outputs.ci-runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            core:
+              - 'core/**'
+            apps:
+              - 'apps/**'
+            ci-runner:
+              - 'ci-runner/**'
+
+  core-base-install:
+    needs: changes
+    if: ${{ needs.changes.outputs.core == 'true' }}
+    runs-on: homelab
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -26,7 +47,8 @@ jobs:
             https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-base-install
 
   core-base-config:
-    needs: core-base-install
+    needs: [changes, core-base-install]
+    if: ${{ !cancelled() && needs.core-base-install.result == 'success' && needs.changes.outputs.core == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -43,7 +65,8 @@ jobs:
             https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-base-config
 
   core-storage:
-    needs: core-base-config
+    needs: [changes, core-base-config]
+    if: ${{ !cancelled() && needs.core-base-config.result == 'success' && needs.changes.outputs.core == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -60,7 +83,8 @@ jobs:
             https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-storage
 
   core-identity:
-    needs: core-storage
+    needs: [changes, core-storage]
+    if: ${{ !cancelled() && needs.core-storage.result == 'success' && needs.changes.outputs.core == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -77,7 +101,8 @@ jobs:
             https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-identity
 
   apps:
-    needs: core-identity
+    needs: [changes, core-identity]
+    if: ${{ !cancelled() && needs.core-identity.result == 'success' && needs.changes.outputs.apps == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -94,7 +119,8 @@ jobs:
             https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-apps
 
   ci-runner:
-    needs: core-base-config
+    needs: [changes, core-base-config]
+    if: ${{ !cancelled() && needs.core-base-config.result == 'success' && needs.changes.outputs.ci-runner == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
