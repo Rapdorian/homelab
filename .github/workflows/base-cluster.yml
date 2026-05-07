@@ -11,9 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-      - run: sudo apt update
-      - run: sudo apt install make
-      - run: make core
+      - run: cd core/base/install && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - run: cd core/base/config && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - run: cd core/storage && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - run: cd core/identity && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
