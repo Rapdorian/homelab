@@ -11,8 +11,8 @@ resource "kubernetes_config_map" "coredns_config" {
   }
 
   data = {
-    "Corefile" = file("${path.module}/Corefile")
-    "jpruitt.db"  = file("${path.module}/jpruitt.db")
+    "Corefile"   = file("${path.module}/Corefile")
+    "jpruitt.db" = file("${path.module}/jpruitt.db")
   }
 }
 
@@ -70,5 +70,35 @@ resource "kubernetes_deployment" "coredns_external" {
         }
       }
     }
+  }
+}
+
+resource "kubernetes_service" "coredns_service" {
+  metadata {
+    name      = "coredns-external-svc"
+    namespace = kubernetes_namespace.external_dns.metadata[0].name
+    annotations = {
+      "metallb.universe.tf/loadBalancerIPs" = "10.0.1.51"
+    }
+  }
+
+  spec {
+    selector = {
+      app = "coredns-external"
+    }
+
+    port {
+      name     = "dns-udp"
+      port     = 53
+      protocol = "UDP"
+    }
+
+    port {
+      name     = "dns-tcp"
+      port     = 53
+      protocol = "TCP"
+    }
+
+    type = "LoadBalancer"
   }
 }
