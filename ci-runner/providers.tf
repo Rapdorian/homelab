@@ -17,11 +17,13 @@ terraform {
 }
 
 provider "helm" {
-  kubernetes = {
+  kubernetes {
     in_cluster_config = true
   }
 }
 
 provider "kubernetes" {
-  in_cluster_config = true
+  kubernetes {
+    in_cluster_config = true
+  }
 }
