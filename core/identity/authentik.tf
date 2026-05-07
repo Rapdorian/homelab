@@ -245,11 +245,11 @@ resource "null_resource" "ldap_outpost_token" {
 
   provisioner "local-exec" {
     command = <<-EOF
-      OUTPOST_UUID=$(echo '${authentik_outpost.ldap.id}')
+      OUTPOST_UUID="${authentik_outpost.ldap.id}"
       TOKEN=$(curl -s -k -X POST \
         -H "Authorization: Bearer ${random_password.authentik_token.result}" \
         -H "Content-Type: application/json" \
-        "http://authentik-server.authentik.svc.cluster.local/api/v3/core/outposts/${OUTPOST_UUID}/token/" | python3 -c "import sys,json; data=json.load(sys.stdin); print(data.get('token', ''))")
+        "http://authentik-server.authentik.svc.cluster.local/api/v3/core/outposts/$${OUTPOST_UUID}/token/" | python3 -c "import sys,json; data=json.load(sys.stdin); print(data.get('token', ''))")
 
       if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ] && [ "$TOKEN" != "" ]; then
         kubectl create secret generic authentik-outpost-token \
