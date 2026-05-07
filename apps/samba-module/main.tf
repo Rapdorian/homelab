@@ -31,7 +31,7 @@ resource "authentik_group" "samba_users" {
 
 resource "authentik_application" "samba" {
   name    = "Samba Share"
-  slug    = "samba"
+  slug    = "samba-share"
   group   = "apps"
 }
 

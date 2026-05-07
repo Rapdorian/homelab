@@ -22,6 +22,9 @@ jobs:
       - name: Cleanup state locks on failure or cancel
         if: cancelled() || failure()
         run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
           for suffix in core-base-install core-base-config core-storage core-identity; do
-            kubectl delete lease lock-tfstate-default-$suffix -n terraform-states --ignore-not-found=true
+            curl -sk -X DELETE \
+              -H "Authorization: Bearer $TOKEN" \
+              https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-$suffix
           done
