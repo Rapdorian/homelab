@@ -74,7 +74,7 @@ resource "kubernetes_config_map" "samba_smb_conf" {
          server max protocol = SMB3
          map to guest = never
          security = user
-         passdb backend = ldapsam:ldap://authentik-server.authentik.svc.cluster.local
+         passdb backend = ldapsam:ldap://authentik-ldap.authentik.svc.cluster.local:3389
          ldap suffix = dc=goauthentik,dc=io
          ldap user suffix = ou=users
          ldap group suffix = ou=groups

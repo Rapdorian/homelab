@@ -9,19 +9,16 @@ authentik:
     user: "authentik_user"
     password: "${password}"
     port: 5432
-  ldap:
-    bind_cn: "ldap-service"
-    bind_password: "${ldap_password}"
-    tls_enabled: false
 server:
   ingress:
     enabled: true
     hosts:
       - auth.svc.jpruitt.dev
-  ldap:
-    enabled: true
-    service:
-      type: ClusterIP
+ldap:
+  enabled: true
+  bind_cn: "cn=ldapservice,ou=users,dc=goauthentik,dc=io"
+  bind_password: "${ldap_password}"
+  tls_enabled: false
 postgresql:
   enabled: false
 
