@@ -8,7 +8,7 @@ resource "helm_release" "postgresql" {
 	chart = "oci://registry-1.docker.io/bitnamicharts/postgresql"
 	namespace = "database"
 	create_namespace = true
-  values = [ templatefile("${path.module}/postgresql.yml", {
+  values = [ templatefile("${path.module}/postgres.yml", {
     password = random_password.password.result
   }) ]
   wait = true
