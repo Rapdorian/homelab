@@ -62,13 +62,34 @@ resource "kubernetes_persistent_volume_claim" "samba_share" {
   }
 }
 
-resource "kubernetes_secret" "samba-cred" {
+resource "kubernetes_config_map" "samba_smb_conf" {
   metadata {
-    name      = "samba-cred"
+    name      = "samba-smb-conf"
     namespace = kubernetes_namespace.samba.metadata[0].name
   }
   data = {
-    USER_PASSWORD = random_password.samba.result
+    "smb.conf" = <<-EOF
+      [global]
+         server string = PS2 Share
+         netbios name = PS2SHARE
+         server min protocol = NT1
+         server max protocol = SMB3
+         map to guest = never
+         security = user
+         log level = 1
+         log file = /var/log/samba/log.%m
+         max log size = 1000
+
+         [PS2]
+            path = /storage
+            browsable = yes
+            writable = yes
+            guest ok = no
+            read only = no
+            create mask = 0777
+            directory mask = 0777
+            valid users = ${var.username}
+    EOF
   }
 }
 
@@ -98,7 +119,7 @@ resource "kubernetes_deployment" "samba" {
 
       spec {
         container {
-          image = "linuxserver/samba:latest"
+          image = "dperson/samba:latest"
           name  = "samba"
 
           env {
@@ -107,33 +128,18 @@ resource "kubernetes_deployment" "samba" {
           }
 
           env {
-            name  = "USER_NAME"
-            value = var.username
+            name  = "WORKGROUP"
+            value = "WORKGROUP"
           }
 
           env {
-            name  = "USER_PASSWORD"
-            value = random_password.samba.result
+            name  = "USER"
+            value = "${var.username};${random_password.samba.result}"
           }
 
           env {
-            name  = "USER_ID"
-            value = "1000"
-          }
-
-          env {
-            name  = "GROUP_ID"
-            value = "1000"
-          }
-
-          env {
-            name  = "SHARE_NAME"
-            value = "PS2"
-          }
-
-          env {
-            name  = "VERSION1"
-            value = "yes"
+            name  = "SHARE"
+            value = "PS2;/storage;yes;no;no;${var.username}"
           }
 
           port {
@@ -157,8 +163,9 @@ resource "kubernetes_deployment" "samba" {
           }
 
           volume_mount {
-            name       = "config"
-            mount_path = "/config"
+            name       = "smb-conf"
+            mount_path = "/etc/samba/smb.conf"
+            sub_path   = "smb.conf"
           }
 
           volume_mount {
@@ -168,8 +175,14 @@ resource "kubernetes_deployment" "samba" {
         }
 
         volume {
-          name = "config"
-          empty_dir {}
+          name = "smb-conf"
+          config_map {
+            name = kubernetes_config_map.samba_smb_conf.metadata[0].name
+            items {
+              key  = "smb.conf"
+              path = "smb.conf"
+            }
+          }
         }
 
         volume {
