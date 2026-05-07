@@ -98,7 +98,11 @@ resource "authentik_provider_oauth2" "grafana" {
   allowed_redirect_uris = [
     {
       matching_mode = "regex"
-      url           = ".*jpruitt.dev"
+      url           = "https://grafana\\.svc\\.jpruitt\\.dev.*"
+    },
+    {
+      matching_mode = "regex"
+      url           = "https://grafana\\.jpruitt\\.dev.*"
     }
   ]
 
