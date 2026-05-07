@@ -1,7 +1,7 @@
 # AGENTS.md - Homelab Terraform
 
 ## What this is
-Terraform IaC for a k3s homelab cluster. State is stored as Kubernetes secrets in namespace `terraform-states`. All providers run **in-cluster** (`in_cluster_config = true`).
+Terraform IaC for a k3s homelab cluster. State is stored as Kubernetes secrets in namespace `terraform-states`. All providers run **in-cluster** (empty `kubernetes {}` block).
 
 ## Developer commands
 - `make core` — applies all core layers in order: base → storage → identity
@@ -10,7 +10,7 @@ Terraform IaC for a k3s homelab cluster. State is stored as Kubernetes secrets i
 - `make core-identity` — initializes and applies `core/identity` (Authentik)
 - `make ci-runner-secret GITHUB_TOKEN=<token>` — creates k8s secret for GitHub Actions runner token
 - `make ci-runner` — initializes and applies `ci-runner/` (GitHub Actions runners)
-- Local `terraform init` needs `KUBE_CONFIG_PATH=~/.kube/config` — providers use `in_cluster_config` but the backend reads kubeconfig
+- Local `terraform init` needs `KUBE_CONFIG_PATH=~/.kube/config` — providers auto-detect in-cluster, but the backend reads kubeconfig
 
 ## Deployment order / dependencies
 ```
@@ -33,8 +33,8 @@ rm -rf .terraform && KUBE_CONFIG_PATH=~/.kube/config terraform init
 
 ## CI/CD
 - Workflows run on self-hosted runner: `runs-on: homelab`
-- `base-cluster.yml` triggers on `core/**` changes → runs `make core`
-- `ci-runner.yml` triggers on `ci-runner/**` changes → runs `make ci-runner`
+- `base-cluster.yml` triggers on `core/**` changes → runs terraform directly
+- `ci-runner.yml` triggers on `ci-runner/**` changes → runs terraform directly
 - GitHub token is stored as k8s secret `github-token` in namespace `arc-systems`
 
 ## Network
@@ -44,7 +44,7 @@ rm -rf .terraform && KUBE_CONFIG_PATH=~/.kube/config terraform init
 
 ## Module boundaries
 - `core/base/install` — MetalLB namespace + helm chart
-- `core/base/config` — MetalLB IP pool + L2Advertisement + Traefik HelmChartConfig
+- `core/base/config` — MetalLB IP pool + L2Advertisement + Traefik HelmChartConfig + split-horizon CoreDNS
 - `core/storage` — PostgreSQL helm chart, writes `postgres-cred` secret to `terraform-states`
 - `core/identity` — Reads `postgres-cred`, creates authentik db/user, deploys authentik helm chart
 - `ci-runner` — GitHub ARC controller + runner scale set, RBAC for terraform state access
