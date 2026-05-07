@@ -1,3 +1,4 @@
+# CI runner configuration - managed by Terraform
 githubConfigUrl: "https://github.com/Rapdorian/homelab"
 githubConfigSecret: "github-token"
 
