@@ -6,7 +6,7 @@ authentik:
     host: "postgresql.database.svc.cluster.local"
     name: "authentik"
     user: "authentik_user"
-    password: ${password}
+    password: "${password}"
     port: 5432
 server:
   ingress:

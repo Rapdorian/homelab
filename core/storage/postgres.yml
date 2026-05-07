@@ -1,7 +1,7 @@
 passwordupdatejob:
   enabled: true
 auth:
-  postgresPassword: ${password}
+  postgresPassword: "${password}"
 metrics:
   enabled: true
   service: 
