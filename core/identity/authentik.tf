@@ -246,10 +246,10 @@ resource "null_resource" "ldap_outpost_token" {
   provisioner "local-exec" {
     command = <<-EOF
       OUTPOST_UUID="${authentik_outpost.ldap.id}"
-      TOKEN=$(curl -s -k -X POST \
+      TOKEN_IDENTIFIER="ak-outpost-${OUTPOST_UUID}-api"
+      TOKEN=$(curl -s -k -X GET \
         -H "Authorization: Bearer ${random_password.authentik_token.result}" \
-        -H "Content-Type: application/json" \
-        "http://authentik-server.authentik.svc.cluster.local/api/v3/core/outposts/$${OUTPOST_UUID}/token/" | python3 -c "import sys,json; data=json.load(sys.stdin); print(data.get('token', ''))")
+        "http://authentik-server.authentik.svc.cluster.local/api/v3/core/tokens/${TOKEN_IDENTIFIER}/view_key/" | python3 -c "import sys,json; data=json.load(sys.stdin); print(data.get('key', data.get('token', '')))")
 
       if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ] && [ "$TOKEN" != "" ]; then
         kubectl create secret generic authentik-outpost-token \
@@ -257,7 +257,7 @@ resource "null_resource" "ldap_outpost_token" {
           -n authentik \
           --dry-run=client -o yaml | kubectl apply -f -
       else
-        echo "ERROR: Could not create outpost token"
+        echo "ERROR: Could not retrieve outpost token, got: $TOKEN"
         exit 1
       fi
     EOF
@@ -273,8 +273,8 @@ resource "authentik_group" "samba_admins" {
 }
 
 resource "authentik_application" "samba" {
-  name              = "Samba Share"
-  slug              = "samba-share"
+  name              = "Samba LDAP"
+  slug              = "samba-ldap"
   protocol_provider = authentik_provider_ldap.samba.id
 
   depends_on = [helm_release.authentik]
