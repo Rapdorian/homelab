@@ -105,6 +105,14 @@ resource "authentik_provider_oauth2" "grafana" {
   property_mappings = data.authentik_property_mapping_provider_scope.grafana.ids
 }
 
+resource "authentik_application" "grafana" {
+  name              = "Grafana"
+  slug              = "grafana"
+  protocol_provider = authentik_provider_oauth2.grafana.id
+
+  group = "apps"
+}
+
 resource "helm_release" "grafana" {
   name           = "grafana"
   chart          = "oci://ghcr.io/grafana-community/helm-charts/grafana"
