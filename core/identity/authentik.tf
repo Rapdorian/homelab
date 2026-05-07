@@ -248,32 +248,21 @@ resource "null_resource" "ldap_outpost_token" {
     command = <<-EOF
       OUTPOST_UUID="${authentik_outpost.ldap.id}"
       TOKEN_IDENTIFIER="ak-outpost-$${OUTPOST_UUID}-api"
-      TOKEN=$$(curl -s -k -X GET \
+      TOKEN=$(curl -s -k -X GET \
         -H "Authorization: Bearer ${random_password.authentik_token.result}" \
         "http://authentik-server.authentik.svc.cluster.local/api/v3/core/tokens/$${TOKEN_IDENTIFIER}/view_key/" | python3 -c "import sys,json; data=json.load(sys.stdin); print(data.get('key', data.get('token', '')))")
 
-      if [ -n "$$TOKEN" ] && [ "$$TOKEN" != "None" ] && [ "$$TOKEN" != "" ]; then
-        SA_TOKEN=$$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+      if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ] && [ "$TOKEN" != "" ]; then
+        SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
         NAMESPACE="authentik"
-        ENCODED_TOKEN=$$(echo -n "$$TOKEN" | base64 -w 0)
+        ENCODED_TOKEN=$(echo -n "$TOKEN" | base64 -w 0)
         curl -sk -X POST \
-          -H "Authorization: Bearer $$SA_TOKEN" \
+          -H "Authorization: Bearer $SA_TOKEN" \
           -H "Content-Type: application/json" \
-          -d "{
-            \"apiVersion\": \"v1\",
-            \"kind\": \"Secret\",
-            \"metadata\": {
-              \"name\": \"authentik-outpost-token\",
-              \"namespace\": \"$$NAMESPACE\"
-            },
-            \"type\": \"Opaque\",
-            \"data\": {
-              \"token\": \"$$ENCODED_TOKEN\"
-            }
-          }" \
-          "https://kubernetes.default.svc/api/v1/namespaces/$$NAMESPACE/secrets" > /dev/null
+          -d "{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"name\":\"authentik-outpost-token\",\"namespace\":\"$NAMESPACE\"},\"type\":\"Opaque\",\"data\":{\"token\":\"$ENCODED_TOKEN\"}}" \
+          "https://kubernetes.default.svc/api/v1/namespaces/$NAMESPACE/secrets" > /dev/null
       else
-        echo "ERROR: Could not retrieve outpost token, got: $$TOKEN"
+        echo "ERROR: Could not retrieve outpost token, got: $TOKEN"
         exit 1
       fi
     EOF
