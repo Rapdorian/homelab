@@ -21,16 +21,6 @@ terraform {
   }
 }
 
-resource "authentik_application" "samba" {
-  name    = "Samba Share"
-  slug    = "samba-share"
-  group   = "apps"
-}
-
-resource "authentik_group" "samba_users" {
-  name = "Samba Users"
-}
-
 resource "kubernetes_namespace" "samba" {
   metadata {
     name = "samba"

@@ -106,6 +106,7 @@ resource "authentik_service_connection_kubernetes" "local" {
 resource "authentik_outpost" "ldap" {
   name             = "samba-ldap-outpost"
   type             = "ldap"
+  service_connection = authentik_service_connection_kubernetes.local.id
   protocol_providers = [
     authentik_provider_ldap.samba.id
   ]
@@ -159,8 +160,13 @@ resource "kubernetes_deployment" "ldap_outpost" {
           }
 
           env {
-            name  = "AUTHENTIK_TOKEN"
-            value = random_password.authentik_token.result
+            name = "AUTHENTIK_TOKEN"
+            value_from {
+              secret_key_ref {
+                name = "authentik-outpost-token"
+                key  = "token"
+              }
+            }
           }
 
           env {
@@ -172,7 +178,7 @@ resource "kubernetes_deployment" "ldap_outpost" {
     }
   }
 
-  depends_on = [helm_release.authentik]
+  depends_on = [helm_release.authentik, null_resource.ldap_outpost_token]
 }
 
 resource "kubernetes_service" "ldap_outpost" {
@@ -232,8 +238,44 @@ resource "null_resource" "set_ldapservice_password" {
   depends_on = [authentik_user.ldapservice]
 }
 
+resource "null_resource" "ldap_outpost_token" {
+  triggers = {
+    outpost_id = authentik_outpost.ldap.id
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOF
+      OUTPOST_UUID=$(echo '${authentik_outpost.ldap.id}')
+      TOKEN=$(curl -s -k -X POST \
+        -H "Authorization: Bearer ${random_password.authentik_token.result}" \
+        -H "Content-Type: application/json" \
+        "http://authentik-server.authentik.svc.cluster.local/api/v3/core/outposts/${OUTPOST_UUID}/token/" | python3 -c "import sys,json; data=json.load(sys.stdin); print(data.get('token', ''))")
+
+      if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ] && [ "$TOKEN" != "" ]; then
+        kubectl create secret generic authentik-outpost-token \
+          --from-literal=token=$TOKEN \
+          -n authentik \
+          --dry-run=client -o yaml | kubectl apply -f -
+      else
+        echo "ERROR: Could not create outpost token"
+        exit 1
+      fi
+    EOF
+  }
+
+  depends_on = [authentik_outpost.ldap]
+}
+
 resource "authentik_group" "samba_admins" {
   name = "Samba Admins"
+
+  depends_on = [helm_release.authentik]
+}
+
+resource "authentik_application" "samba" {
+  name              = "Samba Share"
+  slug              = "samba-share"
+  protocol_provider = authentik_provider_ldap.samba.id
 
   depends_on = [helm_release.authentik]
 }
