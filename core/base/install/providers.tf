@@ -17,7 +17,7 @@ terraform {
 }
 
 provider "helm" {
-  kubernetes = {
+  kubernetes {
     in_cluster_config = true
   }
 }

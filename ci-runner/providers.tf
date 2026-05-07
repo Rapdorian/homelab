@@ -23,7 +23,5 @@ provider "helm" {
 }
 
 provider "kubernetes" {
-  kubernetes {
-    in_cluster_config = true
-  }
+  in_cluster_config = true
 }
