@@ -15,3 +15,7 @@ module "pgweb" {
 module "prometheus" {
   source = "./prometheus-module"
 }
+
+module "opencode" {
+  source = "./opencode"
+}
