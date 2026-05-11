@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    authentik = {
-      source  = "goauthentik/authentik"
-      version = "~> 2025.12.0"
-    }
-  }
-}
-
 resource "authentik_provider_proxy" "simple_server_auth" {
   name               = "Opencode provider"
   external_host      = "https://opencode.svc.jpruitt.dev"

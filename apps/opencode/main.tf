@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/helm"
       version = ">= 2.0, < 4.0"
     }
+    authentik = {
+      source  = "goauthentik/authentik"
+      version = "~> 2025.12.0"
+    }
   }
 }
 
