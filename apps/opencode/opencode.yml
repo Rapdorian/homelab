@@ -1,0 +1,10 @@
+ingress:
+  enabled: true
+  hosts:
+    - host: opencode.svc.jpruitt.dev
+      paths:
+        - path: /
+          pathType: Prefix
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: adlc-authentik-forwardauth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure

@@ -8,12 +8,19 @@ terraform {
       source  = "goauthentik/authentik"
       version = "~> 2025.12.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
   }
 }
 
 resource "helm_release" "opencode" {
-  name           = "prometheus"
-  chart          = "oci://ghcr.io/kubeopencode/helm-charts/kubeopencode"
-  namespace      = "adlc"
+  name             = "opencode"
+  chart            = "oci://ghcr.io/kubeopencode/helm-charts/kubeopencode"
+  namespace        = "adlc"
   create_namespace = true
+  values           = [file("${path.module}/opencode.yml")]
+
+  depends_on = [kubernetes_manifest.traefik_forwardauth]
 }
