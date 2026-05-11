@@ -159,5 +159,10 @@ jobs:
       - uses: actions/checkout@v6
       - name: Get akadmin password
         run: |
-          kubectl get secret authentik-cred -n terraform-states \
-            -o jsonpath='{.data.PASSWORD}' | base64 -d && echo
+          curl -sLo kubectl "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk \
+            -H "Authorization: Bearer $TOKEN" \
+            "https://kubernetes.default.svc/api/v1/namespaces/terraform-states/secrets/authentik-cred" \
+            | python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['data']['PASSWORD']).decode())"
