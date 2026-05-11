@@ -52,6 +52,14 @@ resource "authentik_outpost" "proxy" {
   })
 }
 
+# Create the namespace explicitly so the Middleware CRD and helm release
+# don't race — helm's create_namespace happens too late for the manifest resource.
+resource "kubernetes_namespace" "adlc" {
+  metadata {
+    name = "adlc"
+  }
+}
+
 # Traefik ForwardAuth middleware — lives in the adlc namespace so the
 # IngressRoute in that namespace can reference it directly
 resource "kubernetes_manifest" "traefik_forwardauth" {
@@ -83,5 +91,5 @@ resource "kubernetes_manifest" "traefik_forwardauth" {
     }
   }
 
-  depends_on = [authentik_outpost.proxy]
+  depends_on = [authentik_outpost.proxy, kubernetes_namespace.adlc]
 }

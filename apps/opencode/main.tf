@@ -16,11 +16,10 @@ terraform {
 }
 
 resource "helm_release" "opencode" {
-  name             = "opencode"
-  chart            = "oci://ghcr.io/kubeopencode/helm-charts/kubeopencode"
-  namespace        = "adlc"
-  create_namespace = true
-  values           = [file("${path.module}/opencode.yml")]
+  name      = "opencode"
+  chart     = "oci://ghcr.io/kubeopencode/helm-charts/kubeopencode"
+  namespace = "adlc"
+  values    = [file("${path.module}/opencode.yml")]
 
-  depends_on = [kubernetes_manifest.traefik_forwardauth]
+  depends_on = [kubernetes_manifest.traefik_forwardauth, kubernetes_namespace.adlc]
 }
