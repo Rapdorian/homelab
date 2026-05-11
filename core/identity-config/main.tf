@@ -15,9 +15,12 @@ resource "authentik_token" "terraform_api" {
 # Overwrite the authentik-cred secret with the persistent token.
 # After this runs, core/identity no longer needs to be re-applied
 # to recover API access — this token survives authentik pod restarts.
-resource "kubernetes_secret" "authentik-cred" {
+# Write the persistent token to a separate secret so it doesn't
+# conflict with the bootstrap token secret owned by core/identity.
+# apps/ reads from this secret going forward.
+resource "kubernetes_secret" "authentik-persistent-cred" {
   metadata {
-    name      = "authentik-cred"
+    name      = "authentik-persistent-cred"
     namespace = "terraform-states"
   }
 

@@ -37,7 +37,7 @@ data "kubernetes_secret" "pg-cred" {
 
 data "kubernetes_secret" "authentik-cred" {
   metadata {
-    name      = "authentik-cred"
+    name      = "authentik-persistent-cred"
     namespace = "terraform-states"
   }
 }
