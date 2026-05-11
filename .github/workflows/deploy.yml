@@ -100,9 +100,27 @@ jobs:
             -H "Authorization: Bearer $TOKEN" \
             https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-identity
 
-  apps:
+  core-identity-config:
     needs: [changes, core-identity]
-    if: ${{ !cancelled() && (needs.core-identity.result == 'success' || needs.core-identity.result == 'skipped') && needs.changes.outputs.apps == 'true' }}
+    if: ${{ !cancelled() && (needs.core-identity.result == 'success' || needs.core-identity.result == 'skipped') && needs.changes.outputs.core == 'true' }}
+    runs-on: homelab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: hashicorp/setup-terraform@v4
+      - run: cd core/identity-config && rm -rf .terraform && terraform init && terraform apply -auto-approve -lock-timeout=300s
+      - if: cancelled() || failure()
+        run: |
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-core-identity-config
+
+  apps:
+    needs: [changes, core-identity-config]
+    if: ${{ !cancelled() && (needs.core-identity-config.result == 'success' || needs.core-identity-config.result == 'skipped') && needs.changes.outputs.apps == 'true' }}
     runs-on: homelab
     steps:
       - uses: actions/checkout@v6
@@ -134,4 +152,4 @@ jobs:
           TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
           curl -sk -X DELETE \
             -H "Authorization: Bearer $TOKEN" \
-            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/terraform-states/leases/lock-tfstate-default-ci-runner
+            https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namescpaces/terraform-states/leases/lock-tfstate-default-ci-runner

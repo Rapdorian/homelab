@@ -10,11 +10,15 @@ authentik:
     password: "${password}"
     port: 5432
 server:
+  podAnnotations:
+    token-hash: "${sha256(authentik_token)}"
   ingress:
     enabled: true
     hosts:
       - auth.svc.jpruitt.dev
+worker:
+  podAnnotations:
+    token-hash: "${sha256(authentik_token)}"
 postgresql:
   enabled: false
-
-
+  

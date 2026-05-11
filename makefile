@@ -15,8 +15,13 @@ core-identity:
 	cd core/identity && rm -rf .terraform && terraform init && \
 	terraform apply --auto-approve --lock-timeout=300s
 
+.PHONY: core-identity-config
+core-identity-config:
+	cd core/identity-config && rm -rf .terraform && terraform init && \
+	terraform apply --auto-approve --lock-timeout=300s
+
 .PHONY: core
-core: base core-storage core-identity
+core: base core-storage core-identity core-identity-config
 
 .PHONY: ci-runner-secret
 ci-runner-secret:
