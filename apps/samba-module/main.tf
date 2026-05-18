@@ -8,17 +8,40 @@ variable "username" {
   default = "ps2"
 }
 
+variable "samba_password" {
+  type      = string
+  sensitive = true
+}
+
 terraform {
   required_providers {
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
     }
-    authentik = {
-      source  = "goauthentik/authentik"
-      version = "2025.12.0"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
     }
   }
+}
+
+resource "random_password" "samba_password" {
+  length  = 16
+  special = false
+}
+
+resource "kubernetes_secret" "samba_cred" {
+  metadata {
+    name      = "samba-cred"
+    namespace = kubernetes_namespace.samba.metadata[0].name
+  }
+
+  data = {
+    PASSWORD = var.samba_password != "" ? var.samba_password : random_password.samba_password.result
+  }
+
+  type = "Opaque"
 }
 
 resource "kubernetes_namespace" "samba" {
@@ -43,13 +66,6 @@ resource "kubernetes_persistent_volume_claim" "samba_share" {
   }
 }
 
-data "kubernetes_secret" "authentik_ldap" {
-  metadata {
-    name      = "authentik-ldap-cred"
-    namespace = "terraform-states"
-  }
-}
-
 resource "kubernetes_config_map" "samba_smb_conf" {
   metadata {
     name      = "samba-smb-conf"
@@ -64,13 +80,7 @@ resource "kubernetes_config_map" "samba_smb_conf" {
          server max protocol = SMB3
          map to guest = never
          security = user
-         passdb backend = ldapsam:ldap://authentik-ldap.authentik.svc.cluster.local:3389
-         ldap suffix = dc=ldap,dc=goauthentik,dc=io
-         ldap user suffix = ou=users
-         ldap group suffix = ou=groups
-         ldap admin dn = cn=ldapservice,ou=users,dc=ldap,dc=goauthentik,dc=io
-         ldap ssl = off
-         ldap passwd sync = yes
+         passdb backend = tdbsam
          log level = 1
          log file = /var/log/samba/log.%m
          max log size = 1000
@@ -83,6 +93,7 @@ resource "kubernetes_config_map" "samba_smb_conf" {
             read only = no
             create mask = 0777
             directory mask = 0777
+            valid users = ps2
     EOF
   }
 }
@@ -116,7 +127,7 @@ resource "kubernetes_deployment" "samba" {
           image   = "dperson/samba"
           name    = "samba"
           command = ["/bin/sh", "-c"]
-          args    = ["smbpasswd -w $LDAP_BIND_PASS && exec /sbin/tini -- /usr/bin/samba.sh"]
+          args    = ["smbpasswd -a ps2 -s <<< \"$SAMBA_PASS\" && exec /sbin/tini -- /usr/bin/samba.sh"]
 
           env {
             name  = "TZ"
@@ -124,8 +135,13 @@ resource "kubernetes_deployment" "samba" {
           }
 
           env {
-            name  = "LDAP_BIND_PASS"
-            value = data.kubernetes_secret.authentik_ldap.data["PASSWORD"]
+            name = "SAMBA_PASS"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.samba_cred.metadata[0].name
+                key  = "PASSWORD"
+              }
+            }
           }
 
           port {
