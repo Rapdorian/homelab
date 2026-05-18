@@ -128,7 +128,7 @@ resource "kubernetes_deployment" "samba" {
           image   = "dperson/samba"
           name    = "samba"
           command = ["/bin/sh", "-c"]
-          args    = ["smbpasswd -a ps2 -s <<< \"$SAMBA_PASS\" && exec /sbin/tini -- /usr/bin/samba.sh"]
+          args    = ["echo \"$SAMBA_PASS\" | smbpasswd -a ps2 -s && exec /sbin/tini -- /usr/bin/samba.sh"]
 
           env {
             name  = "TZ"
