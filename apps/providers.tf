@@ -53,6 +53,7 @@ provider "postgresql" {
 }
 
 provider "authentik" {
-  url   = "https://auth.svc.jpruitt.dev"
-  token = data.kubernetes_secret.authentik-cred.data["PASSWORD"]
+  url      = "http://authentik-server.authentik.svc.cluster.local"
+  token    = data.kubernetes_secret.authentik-cred.data["PASSWORD"]
+  insecure = true
 }
