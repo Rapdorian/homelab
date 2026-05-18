@@ -10,6 +10,7 @@ variable "username" {
 
 variable "samba_password" {
   type      = string
+  default   = ""
   sensitive = true
 }
 
