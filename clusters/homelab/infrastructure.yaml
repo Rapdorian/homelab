@@ -19,3 +19,4 @@ spec:
   dependsOn:
     - name: flux-system
     - name: secrets
+    - name: cert-manager

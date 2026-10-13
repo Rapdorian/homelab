@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - namespaces.yaml
   - sources
-  - cert-manager
+  - certificates
   - reflector
   - traefik
   - databases
