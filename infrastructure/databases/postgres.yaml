@@ -31,6 +31,11 @@ spec:
         storageClass: local-path
         size: 10Gi
       extraEnvVars:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-auth
+              key: postgres-password
         - name: AUTHENTIK_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -40,14 +45,12 @@ spec:
         scripts:
           01-authentik.sh: |
             #!/bin/bash
-            set -euo pipefail
-            role_exists=$(psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='authentik'" --username "$POSTGRES_USER" --dbname "$POSTGRES_DB")
-            if [ "$role_exists" != "1" ]; then
-              psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+            set -e
+            if ! psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='authentik'" | grep -q 1; then
+              psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
                 -c "CREATE ROLE authentik LOGIN PASSWORD '$AUTHENTIK_PASSWORD';"
             fi
-            db_exists=$(psql -tAc "SELECT 1 FROM pg_database WHERE datname='authentik'" --username "$POSTGRES_USER" --dbname "$POSTGRES_DB")
-            if [ "$db_exists" != "1" ]; then
-              psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+            if ! psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='authentik'" | grep -q 1; then
+              psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
                 -c "CREATE DATABASE authentik OWNER authentik;"
             fi
