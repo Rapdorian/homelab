@@ -1,14 +1,17 @@
 # Helm chart sources. All HelmReleases reference these via
 # sourceRef.namespace: flux-system.
 ---
+# Bitnami migrated their charts to OCI; the legacy HTTP index now serves OCI
+# references, so this must be an OCI-type repository.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
   name: bitnami
   namespace: flux-system
 spec:
+  type: oci
   interval: 1h
-  url: https://charts.bitnami.com/bitnami
+  url: oci://registry-1.docker.io/bitnami
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
