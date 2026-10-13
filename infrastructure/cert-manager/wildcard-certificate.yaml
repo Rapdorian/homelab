@@ -1,0 +1,29 @@
+# Single wildcard certificate for every *.local.jpruitt.dev ingress.
+#
+# `.dev` is on the HSTS preload list, so browsers require a publicly trusted
+# certificate even though these hosts resolve to the private node IP.
+# cert-manager obtains it via the Cloudflare DNS-01 solver.
+#
+# A Kubernetes TLS Secret must live in the same namespace as the Ingress that
+# references it, so the Secret produced here is replicated by Reflector (see
+# infrastructure/reflector/) to the namespaces listed below. Add a namespace
+# here when you deploy an ingress host in it.
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-local-jpruitt-dev
+  namespace: cert-manager
+spec:
+  secretName: wildcard-local-tls
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.local.jpruitt.dev"
+  secretTemplate:
+    annotations:
+      reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+      reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "auth,observability,default"
+      reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
+      reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "auth,observability,default"

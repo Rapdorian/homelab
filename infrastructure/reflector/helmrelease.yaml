@@ -1,0 +1,22 @@
+# Reflector replicates annotated Secrets/ConfigMaps across namespaces.
+#
+# Used to spread the wildcard TLS Secret (issued in `cert-manager`) to every
+# namespace that terminates ingress, since a TLS Secret must be namespaced with
+# its Ingress. Runs cluster-wide with the default chart values.
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: reflector
+  namespace: reflector
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: reflector
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: reflector
+        namespace: flux-system
+      interval: 1h

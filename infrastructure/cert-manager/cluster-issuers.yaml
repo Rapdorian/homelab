@@ -1,8 +1,18 @@
-# Let's Encrypt via the in-cluster acme-dns server. The `acmeDNS` solver is
-# built into cert-manager core (no webhook needed). The credentials Secret
-# `acme-dns` (key `acmedns.json`) must exist in the cert-manager namespace; it is
-# created out-of-band after registering with acme-dns (see ./README.md). The
-# ClusterIssuer applies fine without it and becomes Ready once the Secret exists.
+# Let's Encrypt via the Cloudflare DNS-01 solver.
+#
+# cert-manager creates/removes the `_acme-challenge` TXT records through the
+# Cloudflare API, so certificates can be issued for hosts that resolve to a
+# private IP (no inbound reachability required). This is what makes `.dev`
+# hosts work, since `.dev` is HSTS-preloaded and requires a publicly trusted
+# certificate.
+#
+# The credentials Secret `cloudflare-api-token` (key `api-token`) must live in
+# the cert-manager namespace (its cluster-resource namespace) and hold a
+# Cloudflare API token scoped to `Zone -> DNS -> Edit` for jpruitt.dev.
+# The ClusterIssuer applies fine without it and becomes Ready once it exists.
+#
+# To test against staging first, point an Ingress/Certificate at
+# `letsencrypt-staging` (avoids burning the production rate limit).
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -16,11 +26,10 @@ spec:
       name: letsencrypt-account-key
     solvers:
       - dns01:
-          acmeDNS:
-            host: http://acme-dns-api.acme-dns.svc.cluster.local:8080
-            accountSecretRef:
-              name: acme-dns
-              key: acmedns.json
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -34,8 +43,7 @@ spec:
       name: letsencrypt-staging-account-key
     solvers:
       - dns01:
-          acmeDNS:
-            host: http://acme-dns-api.acme-dns.svc.cluster.local:8080
-            accountSecretRef:
-              name: acme-dns
-              key: acmedns.json
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token

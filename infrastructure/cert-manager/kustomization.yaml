@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - helmrelease.yaml
   - cluster-issuers.yaml
+  - wildcard-certificate.yaml

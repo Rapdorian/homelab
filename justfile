@@ -60,13 +60,10 @@ decrypt file:
 build path="infrastructure":
     kustomize build {{path}}
 
-# Register the acme-dns credentials as a Secret (one-time, after registering).
-acme-dns-secret:
-    @test -f acmedns.json || { echo "missing ./acmedns.json (see infrastructure/acme-dns/README.md)"; exit 1; }
-    kubectl create secret generic acme-dns \
-        --namespace cert-manager \
-        --from-file=acmedns.json \
-        --dry-run=client -o yaml | kubectl apply -f -
+# Show certificate / ACME order status.
+certs:
+    kubectl get clusterissuers
+    kubectl get certificates,certificaterequests,orders -A
 
 # Dump a kubeconfig from the local k3s server.
 kubeconfig:

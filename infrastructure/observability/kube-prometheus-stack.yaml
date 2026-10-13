@@ -59,12 +59,11 @@ spec:
         enabled: true
         ingressClassName: traefik
         annotations:
-          cert-manager.io/cluster-issuer: letsencrypt
           traefik.ingress.kubernetes.io/router.middlewares: default-security-headers@kubernetescrd
         hosts:
           - grafana.local.jpruitt.dev
         tls:
-          - secretName: grafana-tls
+          - secretName: wildcard-local-tls
             hosts:
               - grafana.local.jpruitt.dev
 

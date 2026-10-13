@@ -9,7 +9,7 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: acme-dns
+  name: reflector
 ---
 apiVersion: v1
 kind: Namespace

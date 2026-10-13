@@ -10,9 +10,6 @@ keys.txt
 .env
 *.kubeconfig
 
-# ---- acme-dns ----
-acmedns.json
-
 # ---- Editors / OS ----
 .DS_Store
 *.swp

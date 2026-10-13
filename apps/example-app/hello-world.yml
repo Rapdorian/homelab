@@ -45,7 +45,6 @@ metadata:
   name: hello-world
   namespace: default
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
     traefik.ingress.kubernetes.io/router.middlewares: default-authentik-forwardauth@kubernetescrd,default-security-headers@kubernetescrd
 spec:
   ingressClassName: traefik
@@ -61,6 +60,6 @@ spec:
                 port:
                   number: 80
   tls:
-    - secretName: hello-world-tls
+    - secretName: wildcard-local-tls
       hosts:
         - hello.local.jpruitt.dev

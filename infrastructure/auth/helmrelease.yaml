@@ -64,11 +64,10 @@ spec:
       ingress:
         enabled: true
         ingressClassName: traefik
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt
+        annotations: {}
         hosts:
           - authentik.local.jpruitt.dev
         tls:
-          - secretName: authentik-tls
+          - secretName: wildcard-local-tls
             hosts:
               - authentik.local.jpruitt.dev
