@@ -35,7 +35,8 @@ apps/                  First-party applications
 ```
 
 Reconciliation order is expressed with Flux `dependsOn`:
-`flux-system (source)` → `secrets` → `cert-manager` → `infrastructure` → `apps`.
+`flux-system (source)` → `sources` → `secrets` → `cert-manager` →
+`infrastructure` → `apps`.
 
 ## Components
 

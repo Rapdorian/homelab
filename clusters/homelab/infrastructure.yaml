@@ -18,5 +18,6 @@ spec:
     name: flux-system
   dependsOn:
     - name: flux-system
+    - name: sources
     - name: secrets
     - name: cert-manager
