@@ -1,0 +1,27 @@
+# Namespaces for the stack. `flux-system` is created by `flux bootstrap` and is
+# intentionally not listed here.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: acme-dns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: databases
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: auth
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability

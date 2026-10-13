@@ -1,0 +1,41 @@
+# Let's Encrypt via the in-cluster acme-dns server. The `acmeDNS` solver is
+# built into cert-manager core (no webhook needed). The credentials Secret
+# `acme-dns` (key `acmedns.json`) must exist in the cert-manager namespace; it is
+# created out-of-band after registering with acme-dns (see ./README.md). The
+# ClusterIssuer applies fine without it and becomes Ready once the Secret exists.
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    email: admin@jpruitt.dev
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      - dns01:
+          acmeDNS:
+            host: http://acme-dns-api.acme-dns.svc.cluster.local:8080
+            accountSecretRef:
+              name: acme-dns
+              key: acmedns.json
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    email: admin@jpruitt.dev
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - dns01:
+          acmeDNS:
+            host: http://acme-dns-api.acme-dns.svc.cluster.local:8080
+            accountSecretRef:
+              name: acme-dns
+              key: acmedns.json

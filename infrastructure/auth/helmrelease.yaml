@@ -1,0 +1,74 @@
+# Authentik (identity provider + SSO + forward-auth outpost).
+#
+# - Uses the shared PostgreSQL; the bundled subchart is disabled.
+# - Application/platform secrets come from the SOPS-encrypted `authentik` Secret
+#   via `global.env` (never inline).
+# - Declarative configuration (providers, applications, groups, RBAC) is loaded
+#   from the `authentik-blueprints` ConfigMap (see blueprints-configmap.yaml).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: authentik
+  namespace: auth
+spec:
+  interval: 1h
+  timeout: 15m
+  dependsOn:
+    - name: postgres
+      namespace: databases
+  chart:
+    spec:
+      chart: authentik
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: goauthentik
+        namespace: flux-system
+  values:
+    global:
+      env:
+        - name: AUTHENTIK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: authentik
+              key: AUTHENTIK_SECRET_KEY
+        - name: AUTHENTIK_POSTGRESQL__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: authentik
+              key: AUTHENTIK_POSTGRESQL__PASSWORD
+        # Read by the Grafana OIDC blueprint (!Env).
+        - name: GRAFANA_OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik
+              key: GRAFANA_OAUTH_CLIENT_SECRET
+
+    postgresql:
+      enabled: false
+
+    authentik:
+      error_reporting:
+        enabled: false
+      postgresql:
+        host: postgres.databases.svc.cluster.local
+        port: 5432
+        name: authentik
+        user: authentik
+
+    blueprints:
+      configMaps:
+        - authentik-blueprints
+
+    server:
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt
+        hosts:
+          - authentik.local.jpruitt.dev
+        tls:
+          - secretName: authentik-tls
+            hosts:
+              - authentik.local.jpruitt.dev

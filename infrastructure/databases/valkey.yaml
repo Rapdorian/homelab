@@ -1,0 +1,29 @@
+# Shared Valkey (Redis-compatible cache). Password comes from the SOPS-encrypted
+# `valkey-auth` Secret (key `valkey-password`).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: valkey
+  namespace: databases
+spec:
+  interval: 1h
+  timeout: 15m
+  chart:
+    spec:
+      chart: valkey
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: flux-system
+  values:
+    fullnameOverride: valkey
+    architecture: standalone
+    auth:
+      enabled: true
+      existingSecret: valkey-auth
+      existingSecretPasswordKey: valkey-password
+    primary:
+      persistence:
+        storageClass: local-path
+        size: 2Gi

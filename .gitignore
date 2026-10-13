@@ -1,0 +1,24 @@
+# ---- Secrets ----
+# Secrets under secrets/ are SOPS-encrypted and safe to commit. The age
+# *private* key is never committed (it lives in ~/.config/sops/age/keys.txt and
+# in the in-cluster `sops-age` Secret).
+age.agekey
+*.agekey
+keys.txt
+
+# ---- Local env ----
+.env
+*.kubeconfig
+
+# ---- acme-dns ----
+acmedns.json
+
+# ---- Editors / OS ----
+.DS_Store
+*.swp
+
+# ---- Local tool binaries ----
+/kustomize
+/sops
+/flux
+/helm

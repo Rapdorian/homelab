@@ -1,0 +1,14 @@
+# SOPS configuration.
+#
+# Secrets under infrastructure/secrets/ are encrypted with age and decrypted by
+# Flux at reconcile time (see clusters/homelab/infrastructure.yaml). Only
+# `data`/`stringData` are encrypted, so metadata stays readable in git.
+#
+# The matching age private key lives at ~/.config/sops/age/keys.txt and must be
+# stored in the cluster as the `sops-age` Secret in `flux-system`:
+#   kubectl create secret generic sops-age -n flux-system \
+#     --from-file=age.agekey=$HOME/.config/sops/age/keys.txt
+creation_rules:
+  - path_regex: secrets/.*\.enc\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: age1rjd9zfrxe3daxxsznyhk4gcltwtcmds54gjjhh6vaqp337jd8y4snkhh07

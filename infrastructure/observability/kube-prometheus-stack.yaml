@@ -1,0 +1,105 @@
+# Prometheus + Alertmanager + Grafana.
+#
+# Grafana authenticates through Authentik (OIDC) and its role is derived from
+# Authentik group membership:
+#   Grafana Admins  -> Admin
+#   Grafana Editors -> Editor
+#   Grafana Viewers -> Viewer
+# `role_attribute_strict: true` means users in none of those groups get no role
+# (and thus no access), so access itself is controlled in Authentik.
+#
+# OAuth client credentials come from the SOPS-encrypted `grafana-oauth` Secret
+# via `envFromSecret` and are referenced with `$__env{...}`.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  interval: 1h
+  timeout: 15m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+  values:
+    crds:
+      enabled: true
+
+    prometheus:
+      prometheusSpec:
+        retention: 15d
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: local-path
+              resources:
+                requests:
+                  storage: 10Gi
+        # Discover ServiceMonitors/PodMonitors in every namespace.
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+
+    grafana:
+      enabled: true
+
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+
+      # Loads GF_AUTH_GENERIC_OAUTH_CLIENT_ID / _CLIENT_SECRET into the pod.
+      envFromSecret: grafana-oauth
+
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt
+          traefik.ingress.kubernetes.io/router.middlewares: default-security-headers@kubernetescrd
+        hosts:
+          - grafana.local.jpruitt.dev
+        tls:
+          - secretName: grafana-tls
+            hosts:
+              - grafana.local.jpruitt.dev
+
+      grafana.ini:
+        server:
+          root_url: https://grafana.local.jpruitt.dev
+        auth:
+          disable_login_form: true
+        auth.generic_oauth:
+          enabled: true
+          name: Authentik
+          client_id: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_ID}
+          client_secret: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+          scopes: openid profile email groups
+          auth_url: https://authentik.local.jpruitt.dev/application/o/authorize/
+          token_url: https://authentik.local.jpruitt.dev/application/o/token/
+          api_url: https://authentik.local.jpruitt.dev/application/o/userinfo/
+          role_attribute_path: "contains(groups[*], 'Grafana Admins') && 'Admin' || contains(groups[*], 'Grafana Editors') && 'Editor' || contains(groups[*], 'Grafana Viewers') && 'Viewer'"
+          role_attribute_strict: true
+          allow_sign_up: true
+          use_pkce: true
+
+      additionalDataSources:
+        - name: Loki
+          type: loki
+          url: http://loki-gateway.observability.svc.cluster.local
+          access: proxy
+        - name: Tempo
+          type: tempo
+          url: http://tempo.observability.svc.cluster.local:3200
+          access: proxy
+          jsonData:
+            tracesToLogsV2:
+              datasourceUid: loki
+              spanStartTimeShift: "-1h"
+              spanEndTimeShift: 1h
+              filterByTraceID: true
+              filterBySpanID: true

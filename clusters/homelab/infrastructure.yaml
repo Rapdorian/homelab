@@ -1,0 +1,21 @@
+# Reconciles everything under ./infrastructure: sources, namespaces,
+# cert-manager, acme-dns, Traefik tuning, databases, Authentik, observability
+# and networking.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1m
+  timeout: 15m
+  path: ./infrastructure
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: flux-system
+    - name: secrets
