@@ -17,6 +17,16 @@ spec:
         namespace: flux-system
   values:
     deploymentMode: SingleBinary
+    # Single-node homelab: the memcached caches and canary are not needed and
+    # the node has limited RAM.
+    chunksCache:
+      enabled: false
+    resultsCache:
+      enabled: false
+    lokiCanary:
+      enabled: false
+    test:
+      enabled: false
     loki:
       auth_enabled: false
       commonConfig:

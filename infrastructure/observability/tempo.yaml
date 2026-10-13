@@ -10,7 +10,10 @@ spec:
   chart:
     spec:
       chart: tempo
-      version: "*"
+      # Pinned: Tempo >=2.7 images require an x86-64-v2 CPU. This node is a VM
+      # whose guest CPU lacks v2 (only ssse3 is exposed). Revisit once the VM
+      # CPU type is set to `host`/`x86-64-v2` on the hypervisor.
+      version: "1.17.0"
       sourceRef:
         kind: HelmRepository
         name: grafana
